@@ -1,76 +1,112 @@
-/*!
- * \file CTransLMVariable.hpp
- * \brief Declaration of the variables of the transition model.
- * \author F. Palacios, T. Economon
- * \version 7.3.1 "Blackbird"
- *
- * SU2 Project Website: https://su2code.github.io
- *
- * The SU2 Project is maintained by the SU2 Foundation
- * (http://su2foundation.org)
- *
- * Copyright 2012-2022, SU2 Contributors (cf. AUTHORS.md)
- *
- * SU2 is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 2.1 of the License, or (at your option) any later version.
- *
- * SU2 is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with SU2. If not, see <http://www.gnu.org/licenses/>.
- */
+//
+// Created by marcocera on 25/02/22.
+//
 
 #pragma once
 
 #include "CTurbVariable.hpp"
 
-/*!
- * \class CTransLMVariable
- * \brief Transition model variables.
- * \ingroup Turbulence_Model
- * \author A. Bueno.
- */
-
 class CTransLMVariable final : public CTurbVariable {
-protected:
-  VectorType gamma_sep;
+ protected:  // elencati in base all'ordine del sito NASA
+  VectorType F_length, F_onset;
+  VectorType F_turb;
+  VectorType F_onset1, reV, F_onset2, R_T, F_onset3, F_length1, F_sublayer, rew, rethetac;
+  VectorType T, rethetat_eq, F_thetat;
+  VectorType Velocity_Mag, delta_param, F_wake, lambda_theta, Turb_Intens, du_dx, du_dy, du_dz, dU_ds, F_lambda, thetat;
+  VectorType gamma_sep, gamma_eff;
 
-public:
+
+ public:
   /*!
    * \brief Constructor of the class.
-   * \param[in] val_intermittency
-   * \param[in] val_REth
+   * \param[in] intermittency - Intermittency (gamma) (initialization value).
+   * \param[in] Re_theta - theta Reynolds number (initialization value).
    * \param[in] npoint - Number of points/nodes/vertices in the domain.
    * \param[in] ndim - Number of dimensions of the problem.
    * \param[in] nvar - Number of variables of the problem.
-   * \param[in] constants -
+   * \param[in] constants   // for now it is off
    * \param[in] config - Definition of the particular problem.
    */
-  CTransLMVariable(su2double intermittency, su2double REth, unsigned long npoint, unsigned long ndim, unsigned long nvar, CConfig *config);
+  CTransLMVariable(su2double intermittency, su2double Re_theta, const su2double* constants, unsigned long npoint,
+                   unsigned long ndim, unsigned long nvar, /*const su2double* constants*/ CConfig* config);
 
   /*!
-   * \brief Destructor of the class.
+     * \brief Destructor of the class.
    */
   ~CTransLMVariable() override = default;
 
   /*!
-   * \brief ________________.
+   * \brief Set the quantities for the terms calculation.
+   * \param[in] val_viscosity - Value of the viscosity.
+   * \param[in] val_dist - Value of the distance to the wall.
+   * \param[in] val_density - Value of the density.
+   * \param[in] val_desiredquantity - Value of the desired quantity.
    */
-  inline su2double GetIntermittency(unsigned long iPoint) const override { return Solution(iPoint,0); }
+  void SetQuantities(unsigned long iPoint, su2double* constants, su2double val_viscosity, su2double val_dist, su2double val_density,
+                     su2double val_vort, su2double StrainMag, CMatrixView<const su2double> Velocity_Gradient,
+                     su2double* Velocity, su2double* TurbVars) override;
+
+  // come ordine tengo quello in cui le ho definite nel .cpp -> probabilmente non tutti sono necessari
+  /*!
+   * \brief Get the various quantities.
+   */
+  inline su2double Getrew(unsigned long iPoint) const override { return rew(iPoint); }
+  inline su2double GetF_length1(unsigned long iPoint) const override { return F_length1(iPoint); }
+  inline su2double GetF_sublayer(unsigned long iPoint) const override { return F_sublayer(iPoint); }
+  inline su2double GetF_length(unsigned long iPoint) const override { return F_length(iPoint); }
+  inline su2double GetreV(unsigned long iPoint) const override { return reV(iPoint); }
+  inline su2double GetF_rethetac(unsigned long iPoint) const override { return rethetac(iPoint); }
+  inline su2double GetF_onset1(unsigned long iPoint) const override { return F_onset1(iPoint); }
+  inline su2double GetR_T(unsigned long iPoint) const override { return R_T(iPoint); }
+  inline su2double GetF_onset2(unsigned long iPoint) const override { return F_onset2(iPoint); }
+  inline su2double GetF_onset3(unsigned long iPoint) const override { return F_onset3(iPoint); }
+  inline su2double GetF_onset(unsigned long iPoint) const override { return F_onset(iPoint); }
+  inline su2double GetF_turb(unsigned long iPoint) const override { return F_turb(iPoint); }
+  inline su2double GetVelocity_Mag(unsigned long iPoint) const override { return Velocity_Mag(iPoint); }
+  inline su2double GetT(unsigned long iPoint) const override { return T(iPoint); }
+  inline su2double Getdu_dx(unsigned long iPoint) const override { return du_dx(iPoint); }
+  inline su2double Getdu_dy(unsigned long iPoint) const override { return du_dy(iPoint); }
+  inline su2double Getdu_dz(unsigned long iPoint) const override { return du_dz(iPoint); }
+  inline su2double GetdU_ds(unsigned long iPoint) const override { return dU_ds(iPoint); }
+  inline su2double GetTurb_Intens(unsigned long iPoint) const override { return Turb_Intens(iPoint); }
+  inline su2double GetF_lambda(unsigned long iPoint) const override { return F_lambda(iPoint); }
+  inline su2double Getrethetat_eq(unsigned long iPoint) const override { return rethetat_eq(iPoint); }
+  inline su2double Getrethetac(unsigned long iPoint) const override { return rethetac(iPoint); }
+  inline su2double Getthetat(unsigned long iPoint) const override { return thetat(iPoint); }
+  inline su2double Getlambda_theta(unsigned long iPoint) const override { return lambda_theta(iPoint); }
+  inline su2double Getdelta_param(unsigned long iPoint) const override { return delta_param(iPoint); }
+  inline su2double GetF_wake(unsigned long iPoint) const override { return F_wake(iPoint); }
+  inline su2double GetF_thetat(unsigned long iPoint) const override { return F_thetat(iPoint); }
+
+
 
   /*!
-   * \brief ________________.
-   * \param[in] gamma_sep_in
+   * \brief Compute the correction for separation-induced transition.
    */
-  inline void SetGammaSep(unsigned long iPoint, su2double gamma_sep_in) override { gamma_sep(iPoint) = gamma_sep_in; }
+  inline void SetGammaSep(unsigned long iPoint, su2double val_gamma_sep) override {
+    gamma_sep(iPoint) = val_gamma_sep;
+  }
 
   /*!
    * \brief Correction for separation-induced transition.
    */
-  inline void SetGammaEff(unsigned long iPoint) override { Solution(iPoint,0) = max(Solution(iPoint,0), gamma_sep(iPoint)); }
+   // Non sono sicuro che sia il modo giusto. Forse conviene lasciare la soluzione come quella che è
+  // ed usare un vettore di gammaEff?
+  inline void SetGammaEff(unsigned long iPoint) override {
+    gamma_eff(iPoint) = max(Solution(iPoint, 0), gamma_sep(iPoint));
+  }
+
+  inline void CorrectGamma(unsigned long iPoint) override {
+    Solution(iPoint, 0) = gamma_eff(iPoint);
+  }
+
+  /*!
+   * \brief Get intermittency value
+   */
+//  inline su2double GetIntermittency(unsigned long iPoint) const override { return Solution(iPoint, 0); }
+  inline su2double GetIntermittency(unsigned long iPoint) const override { return gamma_eff(iPoint); }
+
+
+  inline su2double GetGammaSep(unsigned long iPoint) const override { return gamma_sep(iPoint);}
+  inline su2double GetGammaEff(unsigned long iPoint) const override { return gamma_eff(iPoint);}
 };

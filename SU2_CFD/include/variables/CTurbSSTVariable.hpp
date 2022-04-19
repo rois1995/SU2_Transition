@@ -44,6 +44,8 @@ protected:
   VectorType F2;    /*!< \brief Menter blending function for blending of k-w and k-eps. */
   VectorType CDkw;  /*!< \brief Cross-diffusion. */
 
+  bool transition;
+
 public:
   /*!
    * \brief Constructor of the class.

@@ -1135,27 +1135,6 @@ public:
   /*!
    * \brief A virtual member.
    * \param[in] iPoint - Point index.
-   * \return Sets separation intermittency
-   */
-  inline virtual void SetGammaSep(unsigned long iPoint, su2double gamma_sep) {}
-
-  /*!
-   * \brief A virtual member.
-   * \param[in] iPoint - Point index.
-   * \return Sets separation intermittency
-   */
-  inline virtual void SetGammaEff(unsigned long iPoint) {}
-
-  /*!
-   * \brief A virtual member.
-   * \param[in] iPoint - Point index.
-   * \return Returns intermittency
-   */
-  inline virtual su2double GetIntermittency(unsigned long iPoint) const { return 0.0; }
-
-  /*!
-   * \brief A virtual member.
-   * \param[in] iPoint - Point index.
    * \return Value of the vorticity.
    */
   inline virtual su2double *GetVorticity(unsigned long iPoint) { return nullptr; }
@@ -2273,5 +2252,75 @@ public:
    */
   virtual su2double GetSourceTerm_DispAdjoint(unsigned long iPoint, unsigned long iDim) const { return 0.0; }
   virtual su2double GetSourceTerm_VelAdjoint(unsigned long iPoint, unsigned long iDim) const { return 0.0; }
+
+
+
+
+
+
+
+  // Transition functions
+
+  virtual void SetQuantities(unsigned long iPoint, su2double* constants,  su2double val_viscosity,
+                             su2double val_dist, su2double val_density, su2double val_vort, su2double StrainMag, CMatrixView<const su2double> Velocity_Gradient, su2double *Velocity, su2double *TurbVars) { };
+
+  inline virtual su2double Getrew(unsigned long iPoint) const {return 0.0;};
+  inline virtual su2double GetF_length1(unsigned long iPoint) const {return 0.0;};
+  inline virtual su2double GetF_sublayer(unsigned long iPoint) const {return 0.0;};
+  inline virtual su2double GetF_length(unsigned long iPoint) const {return 0.0;};
+  inline virtual su2double GetreV(unsigned long iPoint) const {return 0.0;};
+  inline virtual su2double GetF_rethetac(unsigned long iPoint) const {return 0.0;};
+  inline virtual su2double GetF_onset1(unsigned long iPoint) const {return 0.0;};
+  inline virtual su2double GetR_T(unsigned long iPoint) const {return 0.0;};
+  inline virtual su2double GetF_onset2(unsigned long iPoint) const {return 0.0;};
+  inline virtual su2double GetF_onset3(unsigned long iPoint) const {return 0.0;};
+  inline virtual su2double GetF_onset(unsigned long iPoint) const {return 0.0;};
+  inline virtual su2double GetF_turb(unsigned long iPoint) const {return 0.0;};
+  inline virtual su2double GetVelocity_Mag(unsigned long iPoint) const {return 0.0;};
+  inline virtual su2double GetT(unsigned long iPoint) const {return 0.0;};
+  inline virtual su2double Getdu_dx(unsigned long iPoint) const {return 0.0;};
+  inline virtual su2double Getdu_dy(unsigned long iPoint) const {return 0.0;};
+  inline virtual su2double Getdu_dz(unsigned long iPoint) const {return 0.0;};
+  inline virtual su2double GetdU_ds(unsigned long iPoint) const {return 0.0;};
+  inline virtual su2double GetTurb_Intens(unsigned long iPoint) const {return 0.0;};
+  inline virtual su2double GetF_lambda(unsigned long iPoint) const {return 0.0;};
+  inline virtual su2double Getrethetat_eq(unsigned long iPoint) const {return 0.0;};
+  inline virtual su2double Getrethetac(unsigned long iPoint) const {return 0.0;};
+  inline virtual su2double Getthetat(unsigned long iPoint) const {return 0.0;};
+  inline virtual su2double Getlambda_theta(unsigned long iPoint) const {return 0.0;};
+  inline virtual su2double Getdelta_param(unsigned long iPoint) const {return 0.0;};
+  inline virtual su2double GetF_wake(unsigned long iPoint) const {return 0.0;};
+  inline virtual su2double GetF_thetat(unsigned long iPoint) const {return 0.0;};
+
+
+  /*!
+   * \brief A virtual member.
+   * \param[in] iPoint - Point index.
+   * \return Sets separation intermittency
+   */
+  inline virtual void SetGammaSep(unsigned long iPoint, su2double gamma_sep) {}
+
+  /*!
+   * \brief A virtual member.
+   * \param[in] iPoint - Point index.
+   * \return Sets separation intermittency
+   */
+  inline virtual void SetGammaEff(unsigned long iPoint) {}
+
+  inline virtual void CorrectGamma(unsigned long iPoint) {}
+
+  /*!
+   * \brief A virtual member.
+   * \param[in] iPoint - Point index.
+   * \return Returns intermittency
+   */
+  inline virtual su2double GetIntermittency(unsigned long iPoint) const { return 0.0; }
+
+  inline virtual su2double GetGammaSep(unsigned long iPoint) const {return 0.0;}
+  inline virtual su2double GetGammaEff(unsigned long iPoint) const {return 0.0;}
+
+
+
+
 
 };

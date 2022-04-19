@@ -247,6 +247,7 @@ void CTurbSSTSolver::Viscous_Residual(unsigned long iEdge, CGeometry* geometry, 
   auto SolverSpecificNumerics = [&](unsigned long iPoint, unsigned long jPoint) {
     /*--- Menter's first blending function (only SST)---*/
     numerics->SetF1blending(nodes->GetF1blending(iPoint), nodes->GetF1blending(jPoint));
+
   };
 
   /*--- Now instantiate the generic implementation with the functor above. ---*/
@@ -265,6 +266,8 @@ void CTurbSSTSolver::Source_Residual(CGeometry *geometry, CSolver **solver_conta
 
   /*--- Pick one numerics object per thread. ---*/
   auto* numerics = numerics_container[SOURCE_FIRST_TERM + omp_get_thread_num()*MAX_TERMS];
+
+  const bool transition = (config->GetKind_Trans_Model() == TURB_TRANS_MODEL::LM);
 
   /*--- Loop over all points. ---*/
 
@@ -307,6 +310,12 @@ void CTurbSSTSolver::Source_Residual(CGeometry *geometry, CSolver **solver_conta
     numerics->SetVorticity(flowNodes->GetVorticity(iPoint), nullptr);
 
     numerics->SetStrainMag(flowNodes->GetStrainMag(iPoint), 0.0);
+
+    /*--- Intermittency from transition ---*/
+    if (transition) {
+//      cout << "intermittency = " << solver_container[TRANS_SOL]->GetNodes()->GetIntermittency(iPoint) << endl;
+      numerics->SetIntermittency(solver_container[TRANS_SOL]->GetNodes()->GetIntermittency(iPoint));
+    }
 
     /*--- Cross diffusion ---*/
 

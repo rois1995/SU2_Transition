@@ -422,6 +422,7 @@ private:
   unsigned short nCFL;         /*!< \brief Number of CFL, one for each multigrid level. */
   su2double
   CFLRedCoeff_Turb,            /*!< \brief CFL reduction coefficient on the LevelSet problem. */
+  CFLRedCoeff_Trans,           /*!< \brief CFL reduction coefficient on the LevelSet transition problem. */
   CFLRedCoeff_AdjFlow,         /*!< \brief CFL reduction coefficient for the adjoint problem. */
   CFLRedCoeff_AdjTurb,         /*!< \brief CFL reduction coefficient for the adjoint turbulent problem. */
   CFLRedCoeff_Species,         /*!< \brief CFL reduction coefficient on the species problem. */
@@ -1317,6 +1318,9 @@ private:
   void addPythonOption(const string name);
 
 public:
+
+ int dummyVar;
+ bool isTransition = false;
 
   /*!
    * \brief Tags for the different fields in a restart file.
@@ -6634,6 +6638,14 @@ public:
    * \return Value of the CFL reduction in turbulence problems.
    */
   su2double GetCFLRedCoeff_Turb(void) const { return CFLRedCoeff_Turb; }
+
+  // Aggiunta da me
+  /*!
+   * \brief Value of the CFL reduction in LevelSet problems.
+   * \return Value of the CFL reduction in LevelSet problems.
+   */
+  su2double GetCFLRedCoeff_Trans(void) const { return CFLRedCoeff_Trans; }
+
 
   /*!
    * \brief Value of the CFL reduction in species problems.

@@ -798,6 +798,18 @@ void CFlowOutput::AddHistoryOutputFields_ScalarRMS_RES(const CConfig* config) {
       AddHistoryOutput("RMS_SPECIES_" + std::to_string(iVar), "rms[rho*Y_" + std::to_string(iVar)+"]", ScreenOutputFormat::FIXED, "RMS_RES", "Root-mean square residual of transported species.", HistoryFieldType::RESIDUAL);
     }
   }
+
+  switch (config->GetKind_Trans_Model()) {
+    case TURB_TRANS_MODEL::BC: break;
+    case TURB_TRANS_MODEL::LM:
+      // DESCRIPTION: Root-mean square residual of the intermittency (LM model).
+      AddHistoryOutput("RMS_INTERMITTENCY", "rms[gamma]",  ScreenOutputFormat::FIXED, "RMS_RES", "Root-mean square residual of intermittency (LM transition model).", HistoryFieldType::RESIDUAL);
+      /// DESCRIPTION: Root-mean square residual of the momentum thickness Reynolds number (LM model).
+      AddHistoryOutput("RMS_RE_THETA_T", "rms[Re_theta_t]",  ScreenOutputFormat::FIXED, "RMS_RES", "Root-mean square residual of RE_THETA_T (LM transition model).", HistoryFieldType::RESIDUAL);
+    case TURB_TRANS_MODEL::NONE:
+      break;
+  }
+
 }
 
 void CFlowOutput::AddHistoryOutputFields_ScalarMAX_RES(const CConfig* config) {
@@ -823,6 +835,17 @@ void CFlowOutput::AddHistoryOutputFields_ScalarMAX_RES(const CConfig* config) {
       AddHistoryOutput("MAX_SPECIES_" + std::to_string(iVar), "max[rho*Y_" + std::to_string(iVar)+"]", ScreenOutputFormat::FIXED, "MAX_RES", "Maximum residual of transported species.", HistoryFieldType::RESIDUAL);
     }
   }
+
+  switch (config->GetKind_Trans_Model()) {
+    case TURB_TRANS_MODEL::BC: break;
+    case TURB_TRANS_MODEL::LM:
+      // DESCRIPTION: Root-mean square residual of the intermittency (LM model).
+      AddHistoryOutput("MAX_INTERMITTENCY", "max[gamma]",  ScreenOutputFormat::FIXED, "MAX_RES", "Maximum residual of intermittency (LM transition model).", HistoryFieldType::RESIDUAL);
+      /// DESCRIPTION: Root-mean square residual of the momentum thickness Reynolds number (LM model).
+      AddHistoryOutput("MAX_RE_THETA_T", "max[Re_theta_t]",  ScreenOutputFormat::FIXED, "MAX_RES", "Maximum residual of RE_THETA_T (LM transition model).", HistoryFieldType::RESIDUAL);
+    case TURB_TRANS_MODEL::NONE:
+    break;
+}
 }
 
 void CFlowOutput::AddHistoryOutputFields_ScalarBGS_RES(const CConfig* config) {
@@ -849,6 +872,18 @@ void CFlowOutput::AddHistoryOutputFields_ScalarBGS_RES(const CConfig* config) {
       AddHistoryOutput("BGS_SPECIES_" + std::to_string(iVar), "bgs[rho*Y_" + std::to_string(iVar)+"]", ScreenOutputFormat::FIXED, "BGS_RES", "BGS residual of transported species.", HistoryFieldType::RESIDUAL);
     }
   }
+
+  switch (config->GetKind_Trans_Model()) {
+    case TURB_TRANS_MODEL::BC: break;
+    case TURB_TRANS_MODEL::LM:
+      /// DESCRIPTION: Maximum residual of the intermittency (LM model).
+      AddHistoryOutput("BGS_INTERMITTENCY", "bgs[gamma]", ScreenOutputFormat::FIXED, "BGS_RES", "BGS residual of the intermittency (LM model).", HistoryFieldType::RESIDUAL);
+      /// DESCRIPTION: Maximum residual of the momentum thickness Reynolds number (LM model).
+      AddHistoryOutput("BGS_RE_THETA_T", "bgs[Re_theta_t]",  ScreenOutputFormat::FIXED, "BGS_RES", "BGS residual of the momentum thickness Reynolds number (LM model).", HistoryFieldType::RESIDUAL);
+      break;
+
+    case TURB_TRANS_MODEL::NONE: break;
+  }
 }
 
 void CFlowOutput::AddHistoryOutputFields_ScalarLinsol(const CConfig* config) {
@@ -861,6 +896,12 @@ void CFlowOutput::AddHistoryOutputFields_ScalarLinsol(const CConfig* config) {
     AddHistoryOutput("LINSOL_ITER_SPECIES", "LinSolIterSpecies", ScreenOutputFormat::INTEGER, "LINSOL", "Number of iterations of the linear solver for species solver.");
     AddHistoryOutput("LINSOL_RESIDUAL_SPECIES", "LinSolResSpecies", ScreenOutputFormat::FIXED, "LINSOL", "Residual of the linear solver for species solver.");
   }
+
+  if (config->GetKind_Trans_Model() != TURB_TRANS_MODEL::NONE && config->GetKind_Trans_Model() != TURB_TRANS_MODEL::BC) {
+    AddHistoryOutput("LINSOL_ITER_TRANS", "LinSolIterTrans", ScreenOutputFormat::INTEGER, "LINSOL", "Number of iterations of the linear solver for transition solver.");
+    AddHistoryOutput("LINSOL_RESIDUAL_TRANS", "LinSolResTrans", ScreenOutputFormat::FIXED, "LINSOL", "Residual of the linear solver for transition solver.");
+  }
+
 }
 // clang-format on
 
@@ -905,6 +946,25 @@ void CFlowOutput::LoadHistoryData_Scalar(const CConfig* config, const CSolver* c
     SetHistoryOutputValue("LINSOL_ITER_SPECIES", solver[SPECIES_SOL]->GetIterLinSolver());
     SetHistoryOutputValue("LINSOL_RESIDUAL_SPECIES", log10(solver[SPECIES_SOL]->GetResLinSolver()));
   }
+
+
+  switch (config->GetKind_Trans_Model()) {
+    case TURB_TRANS_MODEL::BC: break;
+    case TURB_TRANS_MODEL::LM:
+      SetHistoryOutputValue("LINSOL_ITER_TRANS", solver[TRANS_SOL]->GetIterLinSolver());
+      SetHistoryOutputValue("LINSOL_RESIDUAL_TRANS", log10(solver[TRANS_SOL]->GetResLinSolver()));
+      SetHistoryOutputValue("RMS_INTERMITTENCY", log10(solver[TRANS_SOL]->GetRes_RMS(0)));
+      SetHistoryOutputValue("RMS_RE_THETA_T",log10(solver[TRANS_SOL]->GetRes_RMS(1)));
+      SetHistoryOutputValue("MAX_INTERMITTENCY", log10(solver[TRANS_SOL]->GetRes_Max(0)));
+      SetHistoryOutputValue("MAX_RE_THETA_T", log10(solver[TRANS_SOL]->GetRes_Max(1)));
+      if (multiZone) {
+        SetHistoryOutputValue("BGS_INTERMITTENCY", log10(solver[TRANS_SOL]->GetRes_BGS(0)));
+        SetHistoryOutputValue("BGS_RE_THETA_T", log10(solver[TRANS_SOL]->GetRes_BGS(1)));
+      }
+      break;
+
+    case TURB_TRANS_MODEL::NONE: break;
+  }
 }
 
 void CFlowOutput::SetVolumeOutputFields_ScalarSolution(const CConfig* config){
@@ -925,6 +985,21 @@ void CFlowOutput::SetVolumeOutputFields_ScalarSolution(const CConfig* config){
   if (config->GetKind_Species_Model() != SPECIES_MODEL::NONE) {
     for (unsigned short iVar = 0; iVar < config->GetnSpecies(); iVar++)
       AddVolumeOutput("SPECIES_" + std::to_string(iVar), "Species_" + std::to_string(iVar), "SOLUTION", "Species_" + std::to_string(iVar) + " mass fraction");
+  }
+
+  switch (config->GetKind_Trans_Model()) {
+    case TURB_TRANS_MODEL::BC:
+      AddVolumeOutput("INTERMITTENCY", "gamma_BC", "INTERMITTENCY", "Intermittency");
+      break;
+    case TURB_TRANS_MODEL::LM:
+      AddVolumeOutput("INTERMITTENCY", "LM_gamma", "SOLUTION", "LM intermittency");
+      AddVolumeOutput("RE_THETA_T", "LM_Re_t", "SOLUTION", "LM RE_THETA_T");
+      AddVolumeOutput("INTERMITTENCY_SEP", "LM_gamma_sep", "PRIMITIVE", "LM intermittency");
+      AddVolumeOutput("INTERMITTENCY_EFF", "LM_gamma_eff", "PRIMITIVE", "LM RE_THETA_T");
+      break;
+
+    case TURB_TRANS_MODEL::NONE:
+      break;
   }
 }
 
@@ -947,6 +1022,17 @@ void CFlowOutput::SetVolumeOutputFields_ScalarResidual(const CConfig* config) {
     for (unsigned short iVar = 0; iVar < config->GetnSpecies(); iVar++)
       AddVolumeOutput("RES_SPECIES_" + std::to_string(iVar), "Residual_Species_" + std::to_string(iVar), "RESIDUAL", "Residual of the transported species " + std::to_string(iVar));
   }
+
+  switch (config->GetKind_Trans_Model()) {
+    case TURB_TRANS_MODEL::BC: break;
+    case TURB_TRANS_MODEL::LM:
+      AddVolumeOutput("RES_INTERMITTENCY", "Residual_LM_intermittency", "RESIDUAL", "Residual of LM intermittency");
+      AddVolumeOutput("RES_RE_THETA_T", "Residual_LM_RE_THETA_T", "RESIDUAL", "Residual of LM RE_THETA_T");
+      break;
+    case TURB_TRANS_MODEL::NONE:
+      break;
+  }
+
 }
 
 void CFlowOutput::SetVolumeOutputFields_ScalarLimiter(const CConfig* config) {
@@ -1002,8 +1088,10 @@ void CFlowOutput::SetVolumeOutputFields_ScalarLimiter(const CConfig* config) {
 void CFlowOutput::LoadVolumeData_Scalar(const CConfig* config, const CSolver* const* solver, const CGeometry* geometry,
                                         const unsigned long iPoint) {
   const auto* turb_solver = solver[TURB_SOL];
+  const auto* trans_solver = solver[TRANS_SOL];
   const auto* Node_Flow = solver[FLOW_SOL]->GetNodes();
   const auto* Node_Turb = (config->GetKind_Turb_Model() != TURB_MODEL::NONE) ? turb_solver->GetNodes() : nullptr;
+  const auto* Node_Trans = (config->GetKind_Trans_Model() != TURB_TRANS_MODEL::NONE) ? trans_solver->GetNodes() : nullptr;
   const auto* Node_Geo = geometry->nodes;
 
   if (config->GetViscous()) {
@@ -1045,6 +1133,23 @@ void CFlowOutput::LoadVolumeData_Scalar(const CConfig* config, const CSolver* co
   /*--- If we got here a turbulence model is being used, therefore there is eddy viscosity. ---*/
   if (config->GetKind_Turb_Model() != TURB_MODEL::NONE) {
     SetVolumeOutputValue("EDDY_VISCOSITY", iPoint, Node_Flow->GetEddyViscosity(iPoint));
+  }
+
+  switch (config->GetKind_Trans_Model()) {
+    case TURB_TRANS_MODEL::BC:
+      SetVolumeOutputValue("INTERMITTENCY", iPoint, Node_Turb->GetGammaBC(iPoint));
+      break;
+    case TURB_TRANS_MODEL::LM:
+      SetVolumeOutputValue("INTERMITTENCY", iPoint, Node_Trans->GetSolution(iPoint, 0));
+      SetVolumeOutputValue("RE_THETA_T", iPoint, Node_Trans->GetSolution(iPoint, 1));
+      SetVolumeOutputValue("INTERMITTENCY_SEP", iPoint,Node_Trans->GetGammaSep(iPoint));
+      SetVolumeOutputValue("INTERMITTENCY_EFF", iPoint,Node_Trans->GetGammaEff(iPoint));
+      SetVolumeOutputValue("RES_INTERMITTENCY", iPoint, trans_solver->LinSysRes(iPoint, 0));
+      SetVolumeOutputValue("RES_RE_THETA_T", iPoint, trans_solver->LinSysRes(iPoint, 1));
+
+      break;
+
+    case TURB_TRANS_MODEL::NONE: break;
   }
 
   if (config->GetKind_Trans_Model() == TURB_TRANS_MODEL::BC) {
@@ -1851,6 +1956,8 @@ void CFlowOutput::WriteForcesBreakdown(const CConfig* config, const CSolver* flo
   const bool gravity = config->GetGravityForce();
   const TURB_MODEL Kind_Turb_Model = config->GetKind_Turb_Model();
   const bool turbulent = Kind_Turb_Model != TURB_MODEL::NONE;
+  const TURB_TRANS_MODEL Kind_Trans_Model = config->GetKind_Trans_Model();
+  const bool transition = Kind_Trans_Model != TURB_TRANS_MODEL::NONE;
   const bool fixed_cl = config->GetFixed_CL_Mode();
   const auto Kind_Solver = config->GetKind_Solver();
   const auto Ref_NonDim = config->GetRef_NonDim();
@@ -2102,6 +2209,16 @@ void CFlowOutput::WriteForcesBreakdown(const CConfig* config, const CSolver* flo
         case TURB_MODEL::SST_SUST:
           file << "Menter's SST with sustaining terms\n";
           break;
+      }
+      if(transition) {
+        file << "Transition model: ";
+        switch (Kind_Trans_Model) {
+        case TURB_TRANS_MODEL::NONE: break;
+        case TURB_TRANS_MODEL::BC: break;
+        case TURB_TRANS_MODEL::LM:
+          file << "Langtry and Menter's transition\n";
+          break;
+        }
       }
       break;
     default:

@@ -580,6 +580,11 @@ void CFVMFlowSolverBase<V, R>::ImplicitEuler_Iteration(CGeometry *geometry, CSol
   }
   END_SU2_OMP_FOR
 
+//  if(config->dummyVar == TRANS_SOL)
+//    for (int j = 0; j < LinSysRes.GetLocSize(); ++j) {
+//      cout << "LinSysRes[" << j << "] = " << LinSysRes[j] << endl;
+//    }
+
   auto iter = System.Solve(Jacobian, LinSysRes, LinSysSol, geometry, config);
 
   SU2_OMP_MASTER {

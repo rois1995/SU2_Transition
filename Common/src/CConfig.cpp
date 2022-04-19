@@ -1680,6 +1680,8 @@ void CConfig::SetConfig_Options() {
   addDoubleOption("CFL_REDUCTION_ADJFLOW", CFLRedCoeff_AdjFlow, 0.8);
   /* DESCRIPTION: Reduction factor of the CFL coefficient in the level set problem */
   addDoubleOption("CFL_REDUCTION_TURB", CFLRedCoeff_Turb, 1.0);
+  /* DESCRIPTION: Reduction factor of the CFL coefficient in the level set transition problem */
+  addDoubleOption("CFL_REDUCTION_TRANS", CFLRedCoeff_Trans, 1.0);
   /* DESCRIPTION: Reduction factor of the CFL coefficient in the turbulent adjoint problem */
   addDoubleOption("CFL_REDUCTION_ADJTURB", CFLRedCoeff_AdjTurb, 1.0);
   /*!\brief CFL_REDUCTION_SPECIES \n DESCRIPTION: Reduction factor of the CFL coefficient in the species problem \n DEFAULT: 1.0 */
@@ -4576,8 +4578,8 @@ void CConfig::SetPostprocessing(SU2_COMPONENT val_software, unsigned short val_i
     SU2_MPI::Error("BC transition model currently only available in combination with SA turbulence model!", CURRENT_FUNCTION);
   }
 
-  if (Kind_Trans_Model == TURB_TRANS_MODEL::LM) {
-    SU2_MPI::Error("The LM transition model is under maintenance.", CURRENT_FUNCTION);
+  if ((Kind_Turb_Model != TURB_MODEL::SST) && (Kind_Trans_Model == TURB_TRANS_MODEL::LM)) {
+    SU2_MPI::Error("LM transition model currently only available in combination with SST turbulence model.", CURRENT_FUNCTION);
   }
 
   if(Turb_Fixed_Values && !OptionIsSet("TURB_FIXED_VALUES_DOMAIN")){

@@ -561,12 +561,16 @@ class CSourcePieceWise_TurbSST final : public CNumerics {
   const FlowIndices idx; /*!< \brief Object to manage the access to the flow primitives. */
   const bool sustaining_terms = false;
   const bool axisymmetric = false;
+  bool transition;
 
   /*--- Closure constants ---*/
   const su2double sigma_k_1, sigma_k_2, sigma_w_1, sigma_w_2, beta_1, beta_2, beta_star, a1, alfa_1, alfa_2;
 
   /*--- Ambient values for SST-SUST. ---*/
   const su2double kAmb, omegaAmb;
+
+
+  su2double intermittency;
 
   su2double F1_i, F2_i, CDkw_i;
   su2double Residual[2];
@@ -639,6 +643,7 @@ class CSourcePieceWise_TurbSST final : public CNumerics {
         idx(val_nDim, config->GetnSpecies()),
         sustaining_terms(config->GetKind_Turb_Model() == TURB_MODEL::SST_SUST),
         axisymmetric(config->GetAxisymmetric()),
+        transition((config->GetKind_Trans_Model() == TURB_TRANS_MODEL::LM)),
         sigma_k_1(constants[0]),
         sigma_k_2(constants[1]),
         sigma_w_1(constants[2]),
@@ -650,7 +655,8 @@ class CSourcePieceWise_TurbSST final : public CNumerics {
         alfa_1(constants[8]),
         alfa_2(constants[9]),
         kAmb(val_kine_Inf),
-        omegaAmb(val_omega_Inf) {
+        omegaAmb(val_omega_Inf),
+        intermittency(1.0) {
     /*--- "Allocate" the Jacobian using the static buffer. ---*/
     Jacobian_i[0] = Jacobian_Buffer;
     Jacobian_i[1] = Jacobian_Buffer + 2;
@@ -679,6 +685,10 @@ class CSourcePieceWise_TurbSST final : public CNumerics {
    */
   inline void SetCrossDiff(su2double val_CDkw_i) override {
     CDkw_i = val_CDkw_i;
+  }
+
+  inline void SetIntermittency(su2double val_intermittency) override {
+    intermittency = val_intermittency;
   }
 
   /*!
@@ -735,6 +745,7 @@ class CSourcePieceWise_TurbSST final : public CNumerics {
 
       su2double pk = Eddy_Viscosity_i * pow(StrainMag, 2) - 2.0 / 3.0 * Density_i * ScalarVar_i[0] * diverg;
       pk = max(0.0, min(pk, 20.0 * beta_star * Density_i * ScalarVar_i[1] * ScalarVar_i[0]));
+      pk = max(0.0, min(pk, 20.0 * beta_star * Density_i * ScalarVar_i[1] * ScalarVar_i[0]));
 
       const su2double VorticityMag = GeometryToolbox::Norm(3, Vorticity_i);
       const su2double zeta = max(ScalarVar_i[1], VorticityMag * F2_i / a1);
@@ -754,19 +765,31 @@ class CSourcePieceWise_TurbSST final : public CNumerics {
         pw = max(pw, sust_w);
       }
 
+      if(transition){
+        pk = pk * intermittency;
+      }
+
       /*--- Add the production terms to the residuals. ---*/
 
       Residual[0] += pk * Volume;
       Residual[1] += pw * Volume;
 
       /*--- Dissipation ---*/
+      // aggiunto da me
+      su2double DestructionTransMultiplier = 1.0;
+      if(transition){
+        DestructionTransMultiplier = min(max(intermittency, 0.1), 1.0);
+      }
 
-      Residual[0] -= beta_star * Density_i * ScalarVar_i[1] * ScalarVar_i[0] * Volume;
+      Residual[0] -= DestructionTransMultiplier*beta_star * Density_i * ScalarVar_i[1] * ScalarVar_i[0] * Volume;
       Residual[1] -= beta_blended * Density_i * ScalarVar_i[1] * ScalarVar_i[1] * Volume;
 
       /*--- Cross diffusion ---*/
 
       Residual[1] += (1.0 - F1_i) * CDkw_i * Volume;
+
+//      cout << "Turb Source Residual[0] = " << Residual[0] << endl;
+//      cout << "Turb Source Residual[1] = " << Residual[1] << endl;
 
       /*--- Contribution due to 2D axisymmetric formulation ---*/
 
@@ -774,8 +797,8 @@ class CSourcePieceWise_TurbSST final : public CNumerics {
 
       /*--- Implicit part ---*/
 
-      Jacobian_i[0][0] = -beta_star * ScalarVar_i[1] * Volume;
-      Jacobian_i[0][1] = -beta_star * ScalarVar_i[0] * Volume;
+      Jacobian_i[0][0] = -DestructionTransMultiplier*beta_star * ScalarVar_i[1] * Volume;
+      Jacobian_i[0][1] = -DestructionTransMultiplier*beta_star * ScalarVar_i[0] * Volume;
       Jacobian_i[1][0] = 0.0;
       Jacobian_i[1][1] = -2.0 * beta_blended * ScalarVar_i[1] * Volume;
     }
